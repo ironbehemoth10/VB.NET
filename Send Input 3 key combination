@@ -40,19 +40,24 @@ Private Structure INPUT
         Public hi As HARDWAREINPUT
 End Structure
 
-''VB6 Declaration
-Private Declare Function SendInput Lib "user32" _
-        (ByVal nInputs As Integer, _
+<DllImport("user32.dll", SetLastError:=True)> _
+Private Shared Function SetCursorPos _
+        (ByVal X As Integer, _
+         ByVal Y As Integer) As Boolean
+End Function
+
+<DllImport("user32.dll", SetLastError:=True)> _
+Private Shared Function SendInput _
+        (ByVal cInputs As Integer, _
          ByVal pInputs() As INPUT, _
          ByVal cbSize As Integer) As Integer
-    
-''VB.NET Declaration
-'<DllImport("user32.dll", SetLastError:=True)> _
-'Private Shared Function SendInput _
-'    (ByVal cInputs As Integer, _
-'     ByRef pInputs As MOUSEINPUT, _
-'     ByVal cbSize As Integer) As Integer
-'End Function
+End Function
+
+<DllImport("user32.dll", SetLastError:=True)> _
+Private Shared Function SetCursorPos _
+        (ByVal X As Integer, _
+         ByVal Y As Integer) As Boolean
+End Function
 
 
 Private Sub SendKey(ByVal bKey As Short, ByVal bKey2 As Short, ByVal bKey3 As Short)
@@ -88,10 +93,36 @@ Private Sub SendKey(ByVal bKey As Short, ByVal bKey2 As Short, ByVal bKey3 As Sh
 
 End Sub
 
+Private Sub SendMouse()
+        Dim MInput(0) As INPUT
+
+        MInput(0).mi.dx = 0
+        MInput(0).mi.dy = 0
+        MInput(0).mi.dwFlags = MOUSEEVENTF_LEFTDOWN + MOUSEEVENTF_LEFTUP
+        MInput(0).mi.mouseData = 0
+        MInput(0).mi.time = 0
+        MInput(0).mi.dwExtraInfo = 0
+        MInput(0).type = INPUT_MOUSE
+
+        SendInput(1, MInput, Marshal.SizeOf(GetType(INPUT)))
+
+End Sub
+
+
 'USAGE: SendKey(vbNullString,vbNullString,VK_T)
+'USAGE: SendMouse
+'Note: SendInput's x & y coordinates for mouse is relative to the last known position of the cursor. For absolute value_
+'       coordinates, use SetCursorPos API first then use SendInput to click.
 
 
-'Constants/Keys
+'Constants/Keys with Mouse
+Public Const MOUSEEVENTF_LEFTDOWN = &H2
+Public Const MOUSEEVENTF_LEFTUP = &H4
+Public Const MOUSEEVENTF_MIDDLEDOWN = &H20
+Public Const MOUSEEVENTF_MIDDLEUP = &H40
+Public Const MOUSEEVENTF_RIGHTDOWN = &H8
+Public Const MOUSEEVENTF_RIGHTUP = &H10
+Public Const MOUSEEVENTF_MOVE = &H1
 Public Const VK_LBUTTON = &H1
 Public Const VK_RBUTTON = &H2
 Public Const VK_CANCEL = &H3
