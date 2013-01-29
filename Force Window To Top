@@ -1,0 +1,101 @@
+
+'Signatures. 
+<DllImport("user32.dll", SetLastError:=True, CharSet:=CharSet.Auto)> _
+    Private Shared Function ShowWindow( _
+      ByVal hwnd As IntPtr, _
+      ByVal nCmdShow As ShowWindowCommands) As Boolean
+    End Function
+
+<DllImport("user32.dll", SetLastError:=True)> _
+    Private Shared Function GetWindowThreadProcessId( _
+      ByVal hwnd As IntPtr, _
+      ByRef lpdwProcessId As Integer) As IntPtr
+    End Function
+
+<DllImport("kernel32.dll")> _
+    Public Shared Function GetCurrentThreadId() As IntPtr
+    End Function
+
+<DllImport("user32.dll", SetLastError:=True)> _
+    Private Shared Function GetForegroundWindow() As IntPtr
+    End Function
+
+<DllImport("user32.dll", SetLastError:=True)> _
+    Private Shared Function BringWindowToTop( _
+      ByVal hwnd As IntPtr) As Boolean
+    End Function
+
+<DllImport("user32.dll")> _
+    Public Shared Function AttachThreadInput( _
+      ByVal idAttach As System.UInt32, _
+      ByVal idAttachTo As System.UInt32, _
+      ByVal fAttach As Boolean) As Boolean
+    End Function
+
+<DllImport("user32.dll", SetLastError:=True, CharSet:=CharSet.Auto)> _
+    Private Shared Function FindWindow( _
+      ByVal lpClassName As String, _
+      ByVal lpWindowName As String) As IntPtr
+    End Function
+
+Enum ShowWindowCommands As Integer
+    ''' Hides the window and activates another window.
+    Hide = 0
+    ''' Activates and displays a window. If the window is minimized or 
+    ''' maximized, the system restores it to its original size and position.
+    ''' An application should specify this flag when displaying the window 
+    ''' for the first time.
+    Normal = 1
+    ''' Activates the window and displays it as a minimized window.
+    ShowMinimized = 2
+    ''' Maximizes the specified window.
+    Maximize = 3
+    ''' Activates the window and displays it as a maximized window.
+    ShowMaximized = 3
+    ''' Displays a window in its most recent size and position. 
+    ShowNoActivate = 4
+    ''' Activates the window and displays it in its current size and position. 
+    Show = 5
+    ''' Minimizes the specified window and activates the next top-level 
+    ''' window in the Z order.
+    Minimize = 6
+    ''' Displays the window as a minimized window. 
+    ShowMinNoActive = 7
+    ''' Displays the window in its current size and position.
+    ShowNA = 8
+    ''' Activates and displays the window. If the window is minimized or 
+    ''' maximized, the system restores it to its original size and position. 
+    ''' An application should specify this flag when restoring a minimized window.
+    Restore = 9
+    ''' Sets the show state based on the SW_* value specified in the 
+    ''' STARTUPINFO structure passed to the CreateProcess function by the 
+    ''' program that started the application.
+    ShowDefault = 10
+    '''  Windows 2000/XP: Minimizes a window, even if the thread 
+    ''' that owns the window is not responding. This flag should only be 
+    ''' used when minimizing windows from a different thread.
+    ForceMinimize = 11
+End Enum
+
+Function ForceWindow(ByVal hWnd As IntPtr)
+        Dim ThreadID1 As IntPtr
+        Dim ThreadID2 As IntPtr
+
+        ThreadID1 = GetWindowThreadProcessId(GetForegroundWindow(), 0)
+        ThreadID2 = GetCurrentThreadId()
+        '
+        ' By sharing input state, threads share their
+        ' concept of the active window.
+        '
+        If ThreadID1 <> ThreadID2 Then
+            AttachThreadInput(ThreadID1, ThreadID2, True)
+            BringWindowToTop(hWnd)
+            ShowWindow(hWnd, 3)
+            AttachThreadInput(ThreadID1, ThreadID2, False)
+        Else
+            BringWindowToTop(hWnd)
+            ShowWindow(hWnd, 3)
+        End If
+End Function
+
+
