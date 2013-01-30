@@ -1,0 +1,22 @@
+  
+<DllImport("user32.dll", SetLastError:=True, CharSet:=CharSet.Auto)> _
+    Private Shared Function SendMessage _
+        (ByVal hWnd As IntPtr, _
+         ByVal Msg As UInteger, _
+         ByVal wParam As IntPtr, _
+         ByVal lParam As IntPtr) As IntPtr
+End Function
+
+<DllImport("user32.dll", SetLastError:=True, CharSet:=CharSet.Auto)> _
+    Private Shared Function FindWindow _
+        (ByVal lpClassName As String, _
+         ByVal lpWindowName As String) As IntPtr
+End Function
+
+Public Const NILL = 0&
+Public Const WM_SYSCOMMAND = &H112
+Public Const SC_CLOSE = &HF060&
+
+
+Handle = FindWindow(lpClassName,lpWindowName)
+SendMessage(xlHandle, WM_SYSCOMMAND, SC_CLOSE, NILL)
