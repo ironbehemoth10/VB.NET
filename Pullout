@@ -1,0 +1,337 @@
+Imports VB = Microsoft.VisualBasic
+Imports System.Threading
+Imports Excel = Microsoft.Office.Interop.Excel
+Imports System.Runtime.InteropServices
+Imports System.Text
+Imports System.IO
+Imports System
+
+Public Class Form1
+    Private Const KEYEVENTF_KEYUP As Integer = &H2
+    Private Const INPUT_MOUSE As Integer = 0
+    Private Const INPUT_KEYBOARD As Integer = 1
+    Private Const INPUT_HARDWARE As Integer = 2
+
+    Private Structure MOUSEINPUT
+        Public dx As Integer
+        Public dy As Integer
+        Public mouseData As Integer
+        Public dwFlags As Integer
+        Public time As Integer
+        Public dwExtraInfo As IntPtr
+    End Structure
+
+    Private Structure KEYBDINPUT
+        Public wVk As Short
+        Public wScan As Short
+        Public dwFlags As Integer
+        Public time As Integer
+        Public dwExtraInfo As IntPtr
+    End Structure
+
+    Private Structure HARDWAREINPUT
+        Public uMsg As Integer
+        Public wParamL As Short
+        Public wParamH As Short
+    End Structure
+
+    <StructLayout(LayoutKind.Explicit)> _
+    Private Structure INPUT
+        <FieldOffset(0)> _
+        Public type As Integer
+        <FieldOffset(4)> _
+        Public mi As MOUSEINPUT
+        <FieldOffset(4)> _
+        Public ki As KEYBDINPUT
+        <FieldOffset(4)> _
+        Public hi As HARDWAREINPUT
+    End Structure
+
+    Public Const VK_CONTROL = &H11  'Ctrl
+    Public Const VK_PRIOR = &H21    'Page Up
+    Public Const VK_NEXT = &H22     'Page Down    
+    Public Const VK_TAB = &H9       'Tab
+    Public Const VK_SHIFT = &H10    'Shift
+    Public Const VK_RETURN = &HD    'Enter
+    Public Const VK_MENU = &H12     'Tab
+    Public Const WM_KEYDOWN = &H100
+    Public Const WM_KEYUP = &H101
+    Public Const MOUSEEVENTF_LEFTDOWN = &H2
+    Public Const MOUSEEVENTF_LEFTUP = &H4
+    Public Const MOUSEEVENTF_RIGHTDOWN As Long = &H8
+    Public Const MOUSEEVENTF_RIGHTUP As Long = &H10
+    Public Const NILL = 0&
+    Public Const WM_SYSCOMMAND = &H112
+    Public Const SC_CLOSE = &HF060&
+
+    <DllImport("user32.dll", SetLastError:=True)> _
+    Private Shared Function SendInput _
+        (ByVal cInputs As Integer, _
+         ByVal pInputs() As INPUT, _
+         ByVal cbSize As Integer) As Integer
+    End Function
+
+    <DllImport("user32.dll", SetLastError:=True)> _
+    Private Shared Function SetCursorPos _
+        (ByVal X As Integer, _
+         ByVal Y As Integer) As Boolean
+    End Function
+
+    <DllImport("user32.dll", SetLastError:=True, CharSet:=CharSet.Auto)> _
+    Private Shared Function FindWindow _
+        (ByVal lpClassName As String, _
+         ByVal lpWindowName As String) As IntPtr
+    End Function
+
+    <DllImport("user32.dll", SetLastError:=True, CharSet:=CharSet.Auto)> _
+    Private Shared Function ShowWindow _
+        (ByVal hwnd As IntPtr, _
+         ByVal nCmdShow As ShowWindowCommands) As Boolean
+    End Function
+
+    <DllImport("user32.dll", SetLastError:=True)> _
+    Private Shared Function GetWindowThreadProcessId(ByVal hwnd As IntPtr, _
+                          ByRef lpdwProcessId As Integer) As IntPtr
+    End Function
+
+    <DllImport("kernel32.dll")> _
+    Public Shared Function GetCurrentThreadId() As IntPtr
+    End Function
+
+    <DllImport("user32.dll", SetLastError:=True)> _
+    Private Shared Function GetForegroundWindow() As IntPtr
+    End Function
+
+    <DllImport("user32.dll", SetLastError:=True)> _
+    Private Shared Function BringWindowToTop _
+        (ByVal hwnd As IntPtr) As Boolean
+    End Function
+
+    <DllImport("user32.dll")> _
+    Public Shared Function AttachThreadInput _
+        (ByVal idAttach As System.UInt32, _
+         ByVal idAttachTo As System.UInt32, _
+         ByVal fAttach As Boolean) As Boolean
+    End Function
+
+    <DllImport("user32.dll", SetLastError:=True, CharSet:=CharSet.Auto)> _
+    Private Shared Function SendMessage _
+        (ByVal hWnd As IntPtr, _
+         ByVal Msg As UInteger, _
+         ByVal wParam As IntPtr, _
+         ByVal lParam As IntPtr) As IntPtr
+    End Function
+
+    Public Declare Function GetUserName Lib _
+    "advapi32.dll" Alias "GetUserNameA" _
+    (ByVal lpBuffer As String, _
+    ByRef nSize As Integer) As Integer
+
+    Private Sub SendMouse()
+        Dim MInput(0) As INPUT
+
+        MInput(0).mi.dx = 0
+        MInput(0).mi.dy = 0
+        MInput(0).mi.dwFlags = MOUSEEVENTF_LEFTDOWN + MOUSEEVENTF_LEFTUP
+        MInput(0).mi.mouseData = 0
+        MInput(0).mi.time = 0
+        MInput(0).mi.dwExtraInfo = 0
+        MInput(0).type = INPUT_MOUSE
+
+        SendInput(1, MInput, Marshal.SizeOf(GetType(INPUT)))
+
+    End Sub
+    Private Sub SendKey(ByVal bKey As Short, ByVal bKey2 As Short, ByVal bKey3 As Short)
+        Dim GInput(5) As INPUT
+
+        ' press the key
+        GInput(0).type = INPUT_KEYBOARD
+        GInput(0).ki.wVk = bKey
+        GInput(0).ki.dwFlags = 0
+
+        GInput(1).type = INPUT_KEYBOARD
+        GInput(1).ki.wVk = bKey2
+        GInput(1).ki.dwFlags = 0
+
+        GInput(2).type = INPUT_KEYBOARD
+        GInput(2).ki.wVk = bKey3
+        GInput(2).ki.dwFlags = 0
+
+        ' release the key
+        GInput(3).type = INPUT_KEYBOARD
+        GInput(3).ki.wVk = bKey3
+        GInput(3).ki.dwFlags = KEYEVENTF_KEYUP
+
+        GInput(4).type = INPUT_KEYBOARD
+        GInput(4).ki.wVk = bKey2
+        GInput(4).ki.dwFlags = KEYEVENTF_KEYUP
+
+        GInput(5).type = INPUT_KEYBOARD
+        GInput(5).ki.wVk = bKey
+        GInput(5).ki.dwFlags = KEYEVENTF_KEYUP
+
+        SendInput(6, GInput, Marshal.SizeOf(GetType(INPUT)))
+
+    End Sub
+
+    Private Sub ItemDelete(ByVal sDir As String, ByVal sFilter As String)
+        On Error GoTo errhandler
+        For Each strFile As String In Directory.GetFiles(sDir, sFilter)
+            IO.File.Delete(strFile)
+        Next
+        Exit Sub
+errhandler:
+        MsgBox("NT Username Invalid", vbCritical)
+    End Sub
+
+    Private Sub ForceWindow(ByVal hWnd As IntPtr)
+        Dim ThreadID1 As IntPtr
+        Dim ThreadID2 As IntPtr
+
+        ThreadID1 = GetWindowThreadProcessId(GetForegroundWindow(), 0)
+        ThreadID2 = GetCurrentThreadId()
+        '
+        ' By sharing input state, threads share their
+        ' concept of the active window.
+        '
+        If ThreadID1 <> ThreadID2 Then
+            AttachThreadInput(ThreadID1, ThreadID2, True)
+            BringWindowToTop(hWnd)
+            ShowWindow(hWnd, 3)
+            AttachThreadInput(ThreadID1, ThreadID2, False)
+        Else
+            BringWindowToTop(hWnd)
+            ShowWindow(hWnd, 3)
+        End If
+    End Sub
+
+    Private Sub releaseObject(ByVal obj As Object)
+        Try
+            System.Runtime.InteropServices.Marshal.ReleaseComObject(obj)
+            obj = Nothing
+        Catch ex As Exception
+            obj = Nothing
+        Finally
+            GC.Collect()
+        End Try
+    End Sub
+
+    Private Sub ItemOpen(ByVal sDir As String, ByVal sFilter As String)
+        Dim xlApp As New Excel.Application
+        Dim xlWb As Excel.Workbook
+        Dim xlWorksheet As Excel.Worksheet
+        Dim fNameChk, xlFileName As String
+
+        xlApp.Visible = False
+        xlApp.DisplayAlerts = False
+
+        For Each strFile As String In Directory.GetFiles(sDir, sFilter)
+            xlWb = xlApp.Workbooks.Open(strFile)
+            xlWorksheet = xlWb.Worksheets("Intraday")
+
+            If xlWorksheet.Range("C2").Value <> "Revised" Or xlWorksheet.Range("E2").Value <> "Actual" Then
+                MsgBox("Data: Revised , Compare: Actual - required for this report", vbCritical)
+            End If
+
+            fNameChk = xlWorksheet.Range("B1").Value
+            If VB.Left(fNameChk, 3) = "401" Then
+                xlFileName = "401 - IEX Data Central.xls"
+            ElseIf VB.Left(fNameChk, 3) = "402" Then
+                xlFileName = "402 - IEX Data NE Host.xls"
+            ElseIf VB.Left(fNameChk, 3) = "405" Then
+                xlFileName = "405 - IEX Data New York.xls"
+            ElseIf VB.Left(fNameChk, 3) = "406" Then
+                xlFileName = "406 - IEX Data New York Host.xls"
+            ElseIf VB.Left(fNameChk, 3) = "407" Then
+                xlFileName = "407 - IEX Data Central NYN.xls"
+            End If
+
+            xlWb.SaveAs("\\Glofw01\cm reporting\Shared\WFM CC Reports\ACCOUNTS\Wellpoint\Data\IEX\" & xlFileName)
+            xlWb.Close()
+        Next
+
+        xlApp.Quit()
+        Call releaseObject(xlApp)
+    End Sub
+
+Private Sub IEXExtract(ByVal sDir As String, ByVal sFilter As String)
+        Dim wHandle, xlHandle As IntPtr
+        Dim i, FileCounter As Integer
+
+RepeatPerformance:
+        Call ItemDelete("C:\Documents and Settings\" & System.Environment.UserName() & "\WFMData", "*.xls")
+
+        For Each procIEX As Process In Process.GetProcesses
+            If procIEX.MainWindowTitle = String.Empty = False And InStr(1, procIEX.MainWindowTitle, "IEX03 Customer 1") And _
+                InStr(1, procIEX.MainWindowTitle, "NICE IEX Workforce Management") Then
+                wHandle = FindWindow(vbNullString, procIEX.MainWindowTitle)
+            End If
+        Next
+
+        If wHandle = 0 Then
+            MsgBox("Cannot find IEX03 Customer 1. Make sure that TotalView Workstation Client is running. Program will now exit.", MsgBoxStyle.Exclamation)
+            Me.Close()
+            Exit Sub
+        End If
+
+        ForceWindow(wHandle)
+        'Mouse Neutral
+        SetCursorPos(980, 200)
+        SendMouse()
+
+        Thread.Sleep(100)
+        SendKey(vbNullString, VK_CONTROL, VK_PRIOR)
+        SendKey(vbNullString, VK_CONTROL, VK_PRIOR)
+        SendKey(vbNullString, VK_CONTROL, VK_PRIOR)
+        SendKey(vbNullString, VK_CONTROL, VK_PRIOR)
+        SendKey(vbNullString, VK_CONTROL, VK_PRIOR)
+
+        For i = 1 To 5
+            SendKey(VK_SHIFT, VK_TAB, VK_RETURN)
+            Thread.Sleep(1500)
+            ForceWindow(wHandle)
+            SetCursorPos(980, 200)
+            SendMouse()
+            SendKey(vbNullString, VK_CONTROL, VK_NEXT)
+        Next i
+
+        For Each procExcel As Process In Process.GetProcesses
+            If procExcel.MainWindowTitle = String.Empty = False And InStr(1, procExcel.MainWindowTitle, "Microsoft Excel") And _
+                InStr(1, procExcel.MainWindowTitle, "_ttv") Then
+                xlHandle = FindWindow(vbNullString, procExcel.MainWindowTitle)
+                SendMessage(xlHandle, WM_SYSCOMMAND, SC_CLOSE, NILL)
+            End If
+        Next
+
+        For Each strFile As String In Directory.GetFiles(sDir, sFilter)
+            FileCounter = FileCounter + 1
+        Next
+
+        Thread.Sleep(2000)
+        If FileCounter <> 5 Then
+            Dim msgquestion As Object = MsgBox("File Extraction Incomplete. This might be due to increased CPU latency. Program will repeat extraction.", MsgBoxStyle.RetryCancel + MsgBoxStyle.Exclamation) 
+            If msgquestion = vbRetry Then
+                GoTo RepeatPerformance
+            Else
+                Exit Sub
+            End If
+        Else
+            Call ItemOpen("C:\Documents and Settings\" & System.Environment.UserName() & "\WFMData", "*.xls")
+        End If
+
+    End Sub
+
+    Private Sub Button1_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles Button1.Click
+        
+        Cursor.Current = Cursors.WaitCursor
+        Call ItemDelete("C:\Documents and Settings\" & System.Environment.UserName() & "\WFMData", "*.xls")
+        Call IEXExtract("C:\Documents and Settings\" & System.Environment.UserName() & "\WFMData", "*.xls")
+        Cursor.Current = Cursors.Default
+
+    End Sub
+
+    Private Sub Form1_Load(ByVal sender As Object, ByVal e As System.EventArgs) Handles Me.Load
+        Call ItemDelete("C:\Documents and Settings\" & System.Environment.UserName() & "\WFMData", "*.xls")
+        Call IEXExtract("C:\Documents and Settings\" & System.Environment.UserName() & "\WFMData", "*.xls")
+    End Sub
+End Class
