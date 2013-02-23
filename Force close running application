@@ -1,0 +1,11 @@
+Private Sub Form1_FormClosed(ByVal sender As Object, ByVal e As System.Windows.Forms.FormClosedEventArgs) Handles Me.FormClosed
+        Dim location As String = System.Environment.GetCommandLineArgs()(0)
+        Dim appName As String = System.IO.Path.GetFileName(location)
+
+        'Close appname.exe even when renamed
+        For Each p As Process In Process.GetProcesses
+            If p.ProcessName.ToString & ".exe" = appName Then
+                p.Kill()
+            End If
+        Next
+End Sub
