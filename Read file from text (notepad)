@@ -1,0 +1,12 @@
+        Dim path As String
+        Dim line() As String
+
+        path = System.IO.Path.GetDirectoryName( _
+                System.Reflection.Assembly.GetExecutingAssembly().GetName().CodeBase).Substring(6)
+
+        Try
+            Dim streamread As New StreamReader(path & "/Credentials.txt")
+            line = Split(streamread.ReadToEnd, vbCrLf)
+        Catch ex As Exception
+            MsgBox("App did not log you in. Credentials.txt was not found", MsgBoxStyle.Critical)
+        End Try
